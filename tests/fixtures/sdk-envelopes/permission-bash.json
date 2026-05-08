@@ -1,0 +1,9 @@
+{
+  "subtopic": "permission",
+  "data": {
+    "tool": "Bash",
+    "input": { "command": "rm -rf /tmp/cache" },
+    "toolUseId": "toolu_01BashRm",
+    "alwaysAsk": false
+  }
+}

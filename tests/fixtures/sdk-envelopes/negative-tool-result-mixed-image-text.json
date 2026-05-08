@@ -1,0 +1,20 @@
+{
+  "subtopic": "output",
+  "data": {
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_01MixedImg",
+          "content": [
+            { "type": "image", "source": { "data": "..." } },
+            { "type": "text", "text": "Caption: hello" }
+          ],
+          "is_error": false
+        }
+      ]
+    }
+  }
+}

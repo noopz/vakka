@@ -1,0 +1,158 @@
+/* ── Message Blocks ── */
+.message {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 8px 0 8px 14px;
+  margin-top: 14px;
+  border-left: 3px solid transparent;
+  line-height: 1.6;
+  font-size: 14px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.message:first-child {
+  margin-top: 6px;
+}
+
+.message.user {
+  border-left: 3px solid var(--border-user);
+  padding: 18px 0 8px 14px;
+  position: relative;
+}
+
+.message.user::before {
+  content: "you";
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  padding: 1px 8px;
+  background: var(--bg);
+  color: var(--border-user);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-user);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.message.assistant {
+  border-left: 3px solid var(--border-assistant);
+  padding-top: 18px;
+  position: relative;
+}
+
+.message.assistant::before {
+  content: "agent";
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  padding: 1px 8px;
+  background: var(--bg);
+  color: var(--border-assistant);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-assistant);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* Override github-markdown-dark to match Tokyo Night theme */
+.message.assistant .markdown-body {
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Tables: keep github-markdown-css's display:block so we can scroll
+   the table itself instead of the viewport. github-markdown-css sets
+   `width: max-content` which defeats max-width containment in iOS
+   webkit — explicitly override to `width: 100%` so the table block
+   fills the container and scrolls horizontally only when content
+   exceeds 100%. */
+.message.assistant .markdown-body table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  table-layout: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.message.assistant .markdown-body th,
+.message.assistant .markdown-body td {
+  border-color: var(--border);
+  /* break-word only fractures words that would overflow — anywhere
+     was shattering short headers like "Stratum" into single chars. */
+  overflow-wrap: break-word;
+}
+
+/* Inline code inside table cells resists shrinking otherwise. */
+.message.assistant .markdown-body td code,
+.message.assistant .markdown-body th code {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.message.assistant .markdown-body th {
+  background: var(--surface);
+}
+
+.message.assistant .markdown-body pre,
+.message.assistant .markdown-body code {
+  font-family: var(--font-mono);
+}
+
+.message.assistant .markdown-body pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.message.assistant .markdown-body code {
+  background: var(--surface);
+}
+
+.message.assistant .markdown-body blockquote {
+  border-left-color: var(--border);
+  color: var(--text-dim);
+}
+
+.message.assistant .markdown-body a {
+  color: var(--accent);
+}
+
+.message.assistant .markdown-body h1,
+.message.assistant .markdown-body h2 {
+  border-bottom-color: var(--border);
+}
+
+.message.assistant .markdown-body hr {
+  background-color: var(--border);
+}
+
+.message.system {
+  border-left-color: var(--border-system);
+  color: var(--text-dim);
+  font-size: 13px;
+  background: none;
+  padding: 4px 0 4px 14px;
+}
+

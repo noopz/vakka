@@ -1,0 +1,22 @@
+{
+  "subtopic": "output",
+  "data": {
+    "type": "assistant",
+    "message": {
+      "id": "msg_01ABCDEFTextOnly",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-7",
+      "content": [
+        { "type": "text", "text": "Sure — here's the answer." }
+      ],
+      "stop_reason": "end_turn",
+      "usage": {
+        "input_tokens": 17,
+        "cache_creation_input_tokens": 1024,
+        "cache_read_input_tokens": 5000,
+        "output_tokens": 42
+      }
+    }
+  }
+}

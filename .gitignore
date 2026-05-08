@@ -1,0 +1,23 @@
+node_modules/
+dist/
+vendor/frida-gum/libfrida-gum.a
+public/index.js
+public/index.js.map
+public/app.css
+public/app.css.map
+config/auth.json
+data/
+*.db
+logs/
+.DS_Store
+.playwright-mcp/
+*.png
+!docs/images/*.png
+.strata/
+.claude/settings.local.json
+
+# Pre-implementation artifacts (kept locally, excluded from publish)
+mocks/
+design/
+scripts/spike-*.ts
+docs/internal/

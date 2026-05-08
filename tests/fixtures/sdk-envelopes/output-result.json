@@ -1,0 +1,9 @@
+{
+  "subtopic": "output",
+  "data": {
+    "type": "result",
+    "subtype": "success",
+    "total_cost_usd": 0.0123,
+    "duration_ms": 4321
+  }
+}

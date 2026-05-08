@@ -1,0 +1,9 @@
+{
+  "subtopic": "permission",
+  "data": {
+    "tool": "Bash",
+    "input": { "command": "ls" },
+    "toolUseId": "toolu_01BashLsPerm",
+    "decision": "allow"
+  }
+}

@@ -1,0 +1,126 @@
+/* ── Picker Tabs ── */
+.picker-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg);
+  border-radius: var(--radius-button);
+  padding: 2px;
+}
+
+.picker-tab {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: calc(var(--radius-button) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.picker-tab.active {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+
+.picker-tab:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+/* ── New Path Tab ── */
+.picker-new-path form {
+  display: flex;
+  gap: 8px;
+}
+
+.picker-new-path form input {
+  flex: 1;
+}
+
+.picker-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+/* ── Browser Tab ── */
+.picker-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.picker-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.picker-current-path {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+
+.picker-manual {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.picker-manual input {
+  flex: 1;
+}
+
+.picker-error {
+  color: var(--danger);
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+/* Project picker modal list */
+.project-picker-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 8px 0;
+}
+
+.project-picker-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: var(--radius-button);
+  transition: background 0.15s;
+}
+
+.project-picker-item:hover {
+  background: var(--surface-elevated);
+}
+
+.project-picker-item.creating {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.project-picker-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.project-picker-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.project-picker-path {
+  color: var(--text-dim);
+}
+

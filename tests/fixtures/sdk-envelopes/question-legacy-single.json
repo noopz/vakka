@@ -1,0 +1,13 @@
+{
+  "subtopic": "question",
+  "data": {
+    "questionId": "q_legacy_001",
+    "question": "Continue with the rebuild?",
+    "options": [
+      { "label": "Yes" },
+      { "label": "No" }
+    ],
+    "allowFreeText": false,
+    "multiSelect": false
+  }
+}

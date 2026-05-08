@@ -1,0 +1,43 @@
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+
+.modal {
+  background: var(--surface-elevated);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal h2 {
+  font-size: 18px;
+}
+
+.modal input, .modal select {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-button);
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 44px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+

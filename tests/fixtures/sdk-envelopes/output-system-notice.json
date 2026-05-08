@@ -1,0 +1,10 @@
+{
+  "subtopic": "output",
+  "data": {
+    "type": "system",
+    "subtype": "notice",
+    "message": {
+      "content": "Resumed session from snapshot."
+    }
+  }
+}

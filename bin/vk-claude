@@ -1,0 +1,34 @@
+#!/bin/bash
+# vk-claude — Vakka-shimmed wrapper around the pinned, re-signed claude binary.
+#
+# This is intentionally separate from the system `claude` symlink. A bug in the
+# shim must never brick normal CC use — run plain `claude` if vk-claude misbehaves.
+
+set -e
+
+VAKKA_ROOT="${VAKKA_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+CC_BIN="${VK_CLAUDE_BIN:-$HOME/.vakka/claude-2.1.126}"
+SHIM="${VK_CLAUDE_SHIM:-$VAKKA_ROOT/dist/libvakka-shim.dylib}"
+
+if [ ! -x "$CC_BIN" ]; then
+  echo "vk-claude: pinned binary not found at $CC_BIN" >&2
+  echo "vk-claude: run Phase 0 setup (copy + re-sign) first" >&2
+  exit 127
+fi
+
+if [ ! -f "$SHIM" ]; then
+  echo "vk-claude: shim not built at $SHIM" >&2
+  echo "vk-claude: build with 'make -C $VAKKA_ROOT/shim' first" >&2
+  exit 127
+fi
+
+export DYLD_INSERT_LIBRARIES="$SHIM"
+
+# Suppress the BUN_INSPECT banner if the shim opts into the inspector.
+# The four-line banner Bun emits on bind would otherwise leak to stderr.
+if [ -n "$VK_CLAUDE_INSPECT" ]; then
+  export BUN_INSPECT="$VK_CLAUDE_INSPECT"
+  exec "$CC_BIN" "$@" 2> >(grep -v -E '^(-+ Bun Inspector -+|Listening on ws://|To connect|-+)$' >&2)
+fi
+
+exec "$CC_BIN" "$@"

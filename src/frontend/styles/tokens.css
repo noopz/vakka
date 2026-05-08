@@ -1,0 +1,108 @@
+:root {
+  /* ── Vakka palette v2 — warm-neutral ground, lime primary ──
+     Reference: design/vakka-palette-v2.css */
+
+  /* Backgrounds — four-step warm-neutral ramp */
+  --bg-0: #0a0a0c;
+  --bg-1: #111114;
+  --bg-2: #16161a;
+  --bg-3: #1d1d22;
+
+  /* Borders — two strengths */
+  --border-color: #26262d;
+  --border-strong: #34343d;
+
+  /* Foregrounds — desaturated grays */
+  --fg-0: #ededf0;
+  --fg-1: #b8b8c0;
+  --fg-2: #7a7a85;
+  --fg-3: #4d4d55;
+
+  /* Accents — sidebar/home keep the bright lime + saturated blue. */
+  --accent-c:        #c4f042;
+  --accent-dim:      #c4f04222;
+  --accent-edge:     #c4f04244;
+
+  --blue:            #6aa3ff;
+  --blue-dim:        #6aa3ff20;
+  --blue-edge:       #6aa3ff44;
+
+  --amber:           #f5b942;
+  --amber-dim:       #f5b94220;
+  --amber-edge:      #f5b94244;
+
+  --cli:             #b48ead;
+  --cli-dim:         #b48ead18;
+  --cli-edge:        #b48ead44;
+
+  --running:         #5fd97a;
+  --live:            var(--amber);
+
+  /* ── Chat-view-only soft variants ──
+     The chat panel's saturated user-blue / agent-lime fought the home
+     palette. These muted aliases tone the chat down without touching
+     anything the sidebar / home page consume. */
+  --user-soft:       #8b97ad;       /* muted slate for user role */
+  --user-soft-edge:  #8b97ad55;
+  --user-soft-dim:   #8b97ad18;
+  --agent-soft:      #9bb079;       /* muted sage for agent role */
+  --agent-soft-edge: #9bb07955;
+  --agent-soft-dim:  #9bb07922;
+  --violet-soft:     #b691f5;       /* plan-proposal accent */
+  --violet-soft-edge:#b691f555;
+  --violet-soft-dim: #b691f520;
+  --amber-soft:      #d4a23b;       /* permission rail tone */
+  --amber-soft-edge: #d4a23b55;
+  --amber-soft-dim:  #d4a23b18;
+
+  /* ── Semantic roles (consume these in components) ── */
+  --bg: var(--bg-0);
+  --surface: var(--bg-1);
+  --surface-elevated: var(--bg-2);
+  --surface-hover: var(--bg-3);
+
+  --border: var(--border-color);
+  --border-subtle: var(--bg-2);
+
+  --text-primary: var(--fg-0);
+  --text-secondary: var(--fg-1);
+  --text-dim: var(--fg-2);
+  --text-faint: var(--fg-3);
+
+  --accent: var(--accent-c);
+  --accent-hover: var(--accent-c);
+
+  --info: var(--blue);
+  --warning: var(--amber);
+  --success: var(--running);
+  --danger: #f7768e;
+  --error: #f7768e;
+  --error-bg: rgba(247, 118, 142, 0.1);
+  --success-bg: rgba(95, 217, 122, 0.1);
+
+  /* Message borders — chat-view only; soft variants so they don't fight
+     the bright lime/blue used by the home page and sidebar. */
+  --border-user: var(--user-soft);
+  --border-assistant: var(--agent-soft);
+  --border-tool: var(--amber-soft);
+  --border-question: var(--user-soft);
+  --border-system: var(--fg-3);
+
+  /* Card backgrounds (soft) */
+  --permission-bg: var(--amber-soft-dim);
+  --question-bg: var(--user-soft-dim);
+
+  /* Radii */
+  --radius-button: 4px;
+  --radius-card: 6px;
+  --radius-tile: 6px;
+  --radius-pill: 999px;
+
+  /* Spacing */
+  --message-gap: 4px;
+
+  /* Fonts */
+  --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+  --font-serif: "Instrument Serif", "Times New Roman", Georgia, serif;
+}

@@ -1,0 +1,33 @@
+/* Entry stylesheet — esbuild bundles all @imports into public/app.css.
+   Each part is a single UI surface; keep adding new ones here in order. */
+
+@import "./tokens.css";
+
+/* Base markdown typography — overridden per-component in messages.css. */
+@import "github-markdown-css/github-markdown-dark.css";
+
+@import "./parts/base.css";
+@import "./parts/layout.css";
+@import "./parts/sidebar.css";
+@import "./parts/dashboard.css";
+@import "./parts/project-home.css";
+@import "./parts/picker.css";
+@import "./parts/chat-view.css";
+@import "./parts/preview.css";
+@import "./parts/messages.css";
+@import "./parts/transcript-depth.css";
+@import "./parts/compact-banner.css";
+@import "./parts/tool-result.css";
+@import "./parts/permission-card.css";
+@import "./parts/question-card.css";
+@import "./parts/plan-proposal-card.css";
+@import "./parts/streaming.css";
+@import "./parts/input.css";
+@import "./parts/status-bar.css";
+@import "./parts/login.css";
+@import "./parts/modal.css";
+@import "./parts/buttons.css";
+@import "./parts/empty-state.css";
+@import "./parts/scrollbar.css";
+@import "./parts/context-panel.css";
+@import "./parts/demo-mode.css";

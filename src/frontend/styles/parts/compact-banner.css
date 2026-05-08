@@ -1,0 +1,108 @@
+/* ── Compact boundary banner ── */
+.compact-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 0 4px;
+  user-select: none;
+}
+.compact-banner-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--warning) 20%,
+    var(--warning) 80%,
+    transparent
+  );
+  opacity: 0.5;
+}
+.compact-banner-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(224, 175, 104, 0.1);
+  border: 1px solid rgba(224, 175, 104, 0.3);
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.compact-banner-icon {
+  color: var(--warning);
+  font-size: 14px;
+  font-weight: bold;
+}
+.compact-banner-title {
+  color: var(--warning);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.compact-banner-stats {
+  color: var(--text-secondary);
+}
+.compact-banner-savings {
+  color: var(--success);
+  font-weight: 600;
+}
+.compact-banner-trigger {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-left: 4px;
+  border-left: 1px solid var(--border);
+}
+
+
+/* Synthetic post-compact summary the SDK injects as a user turn — collapsed
+   by default so it doesn't masquerade as the user's own input. */
+.compact-summary {
+  margin: 14px 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  font-size: 13px;
+}
+.compact-summary > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+}
+.compact-summary > summary::-webkit-details-marker { display: none; }
+.compact-summary[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+.compact-summary-icon { color: var(--warning); }
+.compact-summary-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+.compact-summary-hint {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.compact-summary[open] .compact-summary-hint::before { content: "click to collapse"; }
+.compact-summary[open] .compact-summary-hint { font-size: 0; }
+.compact-summary[open] .compact-summary-hint::before { font-size: 11px; }
+.compact-summary-body {
+  padding: 10px 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  max-height: 50vh;
+  overflow-y: auto;
+}

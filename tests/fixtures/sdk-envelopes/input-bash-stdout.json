@@ -1,0 +1,6 @@
+{
+  "subtopic": "input",
+  "data": {
+    "text": "<command-stdout>file1.txt\nfile2.txt</command-stdout>"
+  }
+}

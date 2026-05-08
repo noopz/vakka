@@ -1,0 +1,10 @@
+{
+  "subtopic": "output",
+  "data": {
+    "type": "system",
+    "subtype": "init",
+    "session_id": "9ab7c0d2-aaaa-bbbb-cccc-deadbeef0001",
+    "model": "claude-opus-4-7",
+    "tools": ["Bash", "Read", "Edit"]
+  }
+}

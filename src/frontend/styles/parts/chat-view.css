@@ -1,0 +1,314 @@
+/* ── Chat View ── */
+.chat-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative; /* anchor the context drawer overlay */
+}
+
+.chat-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.chat-header-title {
+  font-weight: 600;
+  font-size: 16px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* New header layout: title block (title + subtitle), inline cost + mode pills,
+   status dot, ⋯ menu. Replaces the old single-line title. */
+.ch-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.ch-title {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Project name doubles as the back-to-project affordance. Quiet by default;
+   the chevron + name go accent-colored on hover so the click target is
+   discoverable but doesn't shout. */
+.ch-title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+  min-width: 0;
+}
+.ch-title-link .chev {
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1;
+  transition: color 0.12s;
+}
+.ch-title-link .ch-title { transition: color 0.12s; }
+.ch-title-link:hover .chev,
+.ch-title-link:hover .ch-title { color: var(--accent); }
+.ch-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ch-sub-dot { color: var(--text-dim); }
+
+.ch-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  cursor: default;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.ch-pill.cost {
+  color: var(--accent);
+  background: rgba(196, 240, 66, 0.1);
+  border-color: transparent;
+}
+.ch-pill.mode {
+  cursor: pointer;
+}
+.ch-pill.mode:hover {
+  border-color: var(--text-dim);
+  color: var(--text-primary);
+}
+.ch-pill-caret {
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+/* AUTO toggle — sits next to the mode dropdown. Off = quiet outline; on =
+   amber-filled with a slow pulse so peripheral vision can tell the session
+   is no longer prompting per tool. */
+.ch-pill.auto-toggle {
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  font-size: 10px;
+  padding: 4px 10px;
+}
+.ch-pill.auto-toggle:hover {
+  border-color: var(--text-dim);
+  color: var(--text-primary);
+}
+.ch-pill.auto-toggle .auto-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.ch-pill.auto-toggle.is-on {
+  color: var(--live, #f5b942);
+  border-color: rgba(245, 185, 66, 0.5);
+  background: rgba(245, 185, 66, 0.10);
+}
+.ch-pill.auto-toggle.is-on .auto-dot {
+  background: var(--live, #f5b942);
+  box-shadow: 0 0 0 0 rgba(245, 185, 66, 0.5);
+  animation: auto-pulse 2.4s ease-out infinite;
+}
+@keyframes auto-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(245, 185, 66, 0.55); }
+  70% { box-shadow: 0 0 0 6px rgba(245, 185, 66, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 185, 66, 0); }
+}
+
+.ch-mode-container {
+  position: relative;
+}
+.ch-mode-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface-elevated, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  width: 220px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ch-mode-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.ch-mode-item:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.ch-mode-item.selected { color: var(--accent); }
+.ch-mode-item .check { width: 14px; opacity: 0; flex-shrink: 0; }
+.ch-mode-item.selected .check { opacity: 1; }
+.ch-mode-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 400;
+  margin-top: 1px;
+}
+
+.ch-menu-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  flex-shrink: 0;
+}
+.ch-menu-btn:hover {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+/* Header overflow menu */
+.header-menu-container {
+  position: relative;
+}
+
+.header-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  min-width: 200px;
+  padding: 4px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.header-menu-section {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.header-menu-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.header-menu-section select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-button);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.header-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  text-align: left;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.header-menu-item:hover {
+  background: var(--surface);
+}
+
+.header-menu-item.danger {
+  color: var(--danger);
+}
+
+.header-menu-divider {
+  height: 1px;
+  background: var(--border, rgba(255, 255, 255, 0.08));
+  margin: 6px 4px;
+}
+
+.manager-restart-banner {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 12px;
+  text-align: center;
+  background: var(--accent, #d97706);
+  color: #1a0f00;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.02em;
+}
+
+.message-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--message-gap);
+  min-width: 0;
+}
+

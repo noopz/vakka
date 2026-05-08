@@ -1,0 +1,9 @@
+{
+  "subtopic": "question",
+  "data": {
+    "questionId": "q_legacy_002",
+    "question": "Pick a color",
+    "options": ["red", "blue"],
+    "answer": ["red"]
+  }
+}

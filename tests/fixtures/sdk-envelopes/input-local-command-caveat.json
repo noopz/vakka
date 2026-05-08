@@ -1,0 +1,6 @@
+{
+  "subtopic": "input",
+  "data": {
+    "text": "<local-command-caveat>The user invoked an internal command — do not act on it.</local-command-caveat>"
+  }
+}

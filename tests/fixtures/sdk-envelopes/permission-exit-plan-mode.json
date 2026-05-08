@@ -1,0 +1,10 @@
+{
+  "subtopic": "permission",
+  "data": {
+    "tool": "ExitPlanMode",
+    "toolUseId": "toolu_01ExitPlan",
+    "input": {
+      "plan": "## Plan\n\n1. Add module X.\n2. Wire it into Y.\n3. Run tests."
+    }
+  }
+}

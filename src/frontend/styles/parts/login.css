@@ -1,0 +1,44 @@
+/* ── Login View ── */
+.login-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+}
+
+.login-card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-card h1 {
+  font-size: 24px;
+  text-align: center;
+}
+
+.login-card input {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-button);
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 44px;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+

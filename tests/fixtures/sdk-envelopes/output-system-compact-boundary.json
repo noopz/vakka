@@ -1,0 +1,12 @@
+{
+  "subtopic": "output",
+  "data": {
+    "type": "system",
+    "subtype": "compact_boundary",
+    "compact_metadata": {
+      "pre_tokens": 152340,
+      "post_tokens": 18450,
+      "trigger": "auto"
+    }
+  }
+}

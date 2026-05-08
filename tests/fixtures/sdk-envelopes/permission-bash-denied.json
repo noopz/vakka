@@ -1,0 +1,9 @@
+{
+  "subtopic": "permission",
+  "data": {
+    "tool": "Bash",
+    "input": { "command": "rm -rf /" },
+    "toolUseId": "toolu_01BashDeny",
+    "decision": "deny"
+  }
+}

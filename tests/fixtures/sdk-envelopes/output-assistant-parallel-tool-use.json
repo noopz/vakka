@@ -1,0 +1,33 @@
+{
+  "subtopic": "output",
+  "data": {
+    "type": "assistant",
+    "message": {
+      "id": "msg_01ParallelToolUse",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-7",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01BashLs",
+          "name": "Bash",
+          "input": { "command": "ls -la /tmp" }
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_01EditPath",
+          "name": "Edit",
+          "input": { "file_path": "/tmp/foo.ts", "old_string": "a", "new_string": "b" }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 50
+      }
+    }
+  }
+}

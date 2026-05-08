@@ -1,0 +1,30 @@
+{
+  "subtopic": "permission",
+  "data": {
+    "tool": "AskUserQuestion",
+    "toolUseId": "toolu_01AskUser",
+    "input": {
+      "questions": [
+        {
+          "question": "Which database driver should we target first?",
+          "header": "Database",
+          "options": [
+            { "label": "Postgres", "description": "Best long-term fit." },
+            { "label": "SQLite", "description": "Lower friction for dev." }
+          ],
+          "multiSelect": false,
+          "allowFreeText": false
+        },
+        {
+          "question": "Should migrations be auto-applied?",
+          "options": [
+            { "label": "Yes" },
+            { "label": "No" }
+          ],
+          "multiSelect": false,
+          "allowFreeText": true
+        }
+      ]
+    }
+  }
+}

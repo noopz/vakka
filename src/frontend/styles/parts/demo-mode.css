@@ -1,0 +1,11 @@
+/* Demo mode — outlined DEMO pill. Body redaction is done at render time. */
+
+.ch-pill.demo-pill {
+  color: #f0c040;
+  border-color: #f0c040;
+  background: rgba(240, 192, 64, 0.08);
+  cursor: default;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+  font-weight: 600;
+}

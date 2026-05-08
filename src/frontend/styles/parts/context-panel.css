@@ -1,0 +1,492 @@
+/* ── Context Panel ────────────────────────────────────────────── */
+
+/* Collapsed context bar — always visible above the chat. Numbers stay readable
+   even at low usage; clicking expands into the drawer overlay below. */
+.context-panel {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  transition: background 0.12s;
+}
+.context-panel.collapsed:hover { background: var(--surface-elevated, var(--surface)); }
+
+.ctx-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.ctx-pct {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 12px;
+  min-width: 36px;
+  font-variant-numeric: tabular-nums;
+}
+.ctx-used { color: var(--text-secondary); }
+.ctx-used strong { color: var(--text-primary); font-weight: 600; }
+.ctx-spacer { flex: 1; }
+.ctx-thresh-tag {
+  color: var(--warning);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.ctx-thresh-tag::before {
+  content: "";
+  display: inline-block;
+  width: 1px;
+  height: 9px;
+  background: var(--warning);
+}
+.ctx-expand-tag {
+  color: var(--text-dim);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+/* Bar — segments have a min-width fallback so 0.001% slivers stay visible.
+   Track color is intentionally a step brighter than surface-elevated so the
+   "empty" portion of the bar is clearly distinguishable from the panel bg. */
+.ctx-bar {
+  position: relative;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+  transition: box-shadow 0.15s;
+}
+.ctx-bar-seg {
+  height: 100%;
+  min-width: 2px;
+  background-color: var(--accent);
+}
+/* Stable, distinct fallbacks per position so adjacent segments are
+   distinguishable even when JSX-supplied background-color is absent.
+   Inline style on the element overrides these when present. */
+.ctx-bar-seg:nth-child(8n+1) { background-color: #7dcfff; }
+.ctx-bar-seg:nth-child(8n+2) { background-color: #9ece6a; }
+.ctx-bar-seg:nth-child(8n+3) { background-color: #bb9af7; }
+.ctx-bar-seg:nth-child(8n+4) { background-color: #e0af68; }
+.ctx-bar-seg:nth-child(8n+5) { background-color: #f7768e; }
+.ctx-bar-seg:nth-child(8n+6) { background-color: #7aa2f7; }
+.ctx-bar-seg:nth-child(8n+7) { background-color: #ff9e64; }
+.ctx-bar-seg:nth-child(8n+8) { background-color: #565f89; }
+.ctx-bar-seg:last-child { margin-right: 0; }
+
+/* Threshold tick (auto-compact) — subtle 1px line on the bar itself. */
+.ctx-bar-thresh {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  background: var(--warning);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3);
+  pointer-events: none;
+}
+
+/* Color escalation: percent + bar ring shift as usage rises. */
+.context-panel.high .ctx-pct { color: var(--warning); }
+.context-panel.critical .ctx-pct { color: var(--error); }
+.context-panel.critical .ctx-bar { box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.4); }
+.context-panel.low .ctx-bar-seg { box-shadow: 0 0 6px currentColor; }
+
+/* Drawer — overlays the chat below the header. Sticky summary + scrollable
+   body so deeply nested sections never push the message list down. */
+.ctx-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 11, 16, 0.5);
+  z-index: 40;
+}
+
+.ctx-drawer {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  /* Bottom + max-height together: pin to top, leave 15% breathing room so the
+     chat below stays visible. Without bottom, max-height fights with
+     intrinsic content height and the drawer overflows. */
+  bottom: 15%;
+  max-height: 85vh;
+  background: var(--surface-elevated, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ctx-drawer-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.ctx-drawer-title {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.ctx-drawer-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ctx-drawer-close {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.ctx-drawer-close:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.ctx-drawer-summary {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated, var(--surface));
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ctx-drawer-body {
+  flex: 1;
+  min-height: 0; /* lets the body shrink below its content so scroll engages */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 16px 12px;
+}
+
+/* ── Category chips ── */
+.ctx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ctx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font-size: 10px;
+}
+.ctx-chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: var(--accent);
+}
+/* Fallback palette per position so dots are visible even when JSX-supplied
+   background-color is absent. Inline style overrides these when set. */
+.ctx-chip:nth-child(8n+1) .ctx-chip-dot { background-color: #7dcfff; }
+.ctx-chip:nth-child(8n+2) .ctx-chip-dot { background-color: #9ece6a; }
+.ctx-chip:nth-child(8n+3) .ctx-chip-dot { background-color: #bb9af7; }
+.ctx-chip:nth-child(8n+4) .ctx-chip-dot { background-color: #e0af68; }
+.ctx-chip:nth-child(8n+5) .ctx-chip-dot { background-color: #f7768e; }
+.ctx-chip:nth-child(8n+6) .ctx-chip-dot { background-color: #7aa2f7; }
+.ctx-chip:nth-child(8n+7) .ctx-chip-dot { background-color: #ff9e64; }
+.ctx-chip:nth-child(8n+8) .ctx-chip-dot { background-color: #565f89; }
+.ctx-chip-lbl { color: var(--text-secondary); }
+.ctx-chip-val { color: var(--text-primary); font-weight: 600; font-family: var(--font-mono); }
+
+/* ── Sections ── */
+.ctx-section {
+  border-top: 1px solid var(--border-subtle);
+}
+.ctx-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 10px 12px;
+  margin: 0 -12px;
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+.ctx-section-head:hover {
+  background: var(--surface);
+}
+.ctx-section-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ctx-section-title {
+  color: var(--text-secondary);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.ctx-section-count {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+.ctx-section-tokens {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+.ctx-arrow {
+  color: var(--text-dim);
+  font-size: 9px;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+.ctx-arrow.open { transform: rotate(90deg); }
+
+.ctx-section-body {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ctx-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-right: 4px;
+}
+
+/* ── Rows ── */
+.ctx-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 2px 4px;
+  align-items: center;
+  border-radius: 2px;
+  min-width: 0;
+}
+.ctx-row:hover { background: var(--surface); }
+.ctx-row-name {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ctx-row-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--text-dim);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.ctx-row-badge.loaded {
+  background: rgba(158, 206, 106, 0.15);
+  color: var(--success);
+}
+.ctx-row-tokens {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+.ctx-row-tokens.high { color: var(--warning); font-weight: 600; }
+
+.ctx-row-divider {
+  color: var(--text-dim);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 4px 2px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 4px;
+}
+
+/* ── Filter ── */
+.ctx-filter {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 3px;
+  margin-bottom: 4px;
+}
+.ctx-filter:focus { outline: none; border-color: var(--accent); }
+
+/* ── Device Panel ── */
+.device-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 12px 0 6px;
+}
+
+.device-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-button);
+  margin-bottom: 6px;
+}
+
+.device-item.pending {
+  border-color: var(--warning);
+  background: rgba(232, 147, 47, 0.06);
+}
+
+.device-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.device-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.device-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.device-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+/* Sidebar footer for device link */
+.sidebar-footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.device-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  text-align: left;
+}
+
+.device-link:hover {
+  color: var(--text-primary);
+}
+
+.device-link .pending-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warning);
+  flex-shrink: 0;
+}
+
+/* Thinking / action indicator — sits in the message stream while the agent
+   is working but hasn't started streaming visible tokens yet. */
+.thinking-indicator {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 14px;
+  margin: 4px 0 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  align-self: flex-start;
+}
+.thinking-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.thinking-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  animation: think-bounce 1.2s ease-in-out infinite;
+}
+.thinking-dots i:nth-child(2) { animation-delay: 0.15s; }
+.thinking-dots i:nth-child(3) { animation-delay: 0.30s; }
+@keyframes think-bounce {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+.thinking-verb {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.thinking-elapsed {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.thinking-hint {
+  color: var(--text-dim);
+  font-size: 10px;
+  margin-left: auto;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

@@ -1,0 +1,171 @@
+#!/usr/bin/env bun
+// vk-rc-capture — drive the pinned claude binary with fetch-capture installed
+// at runtime via the Bun inspector. Captures every fetch request/response
+// (including SSE frames) to ~/.vakka/rc-capture.ndjson.
+//
+// Usage:
+//   bin/vk-rc-capture [args-passed-to-claude...]
+//   bin/vk-rc-capture /remote-control       # the actual A1 experiment
+//
+// Flow:
+//   1. Spawn claude with BUN_INSPECT=ws://127.0.0.1:<port>/<token> and
+//      BUN_INSPECT_WAIT=1 so the runtime pauses before user code runs.
+//   2. Connect a WS client to the inspector socket.
+//   3. Runtime.evaluate the fetch-wrapper preload script.
+//   4. Send Inspector.initialized so Bun resumes execution.
+//   5. Inherit stdio so the user can drive /remote-control normally.
+
+import { spawn } from 'node:child_process';
+import { homedir } from 'node:os';
+import { join, dirname, resolve as pathResolve } from 'node:path';
+import { mkdirSync, readFileSync, createWriteStream } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const VAKKA_ROOT = pathResolve(HERE, '..');
+const HOME = homedir();
+const CC_BIN = process.env.VK_CLAUDE_BIN || join(HOME, '.vakka/claude-2.1.126');
+const PRELOAD_PATH = pathResolve(VAKKA_ROOT, 'shim/rc-capture-preload.js');
+const CAPTURE_PATH = join(HOME, '.vakka/rc-capture.ndjson');
+
+mkdirSync(join(HOME, '.vakka'), { recursive: true });
+
+const port = 6499 + Math.floor(Math.random() * 100);
+const token = Math.random().toString(36).slice(2, 12);
+const wsUrl = `ws://127.0.0.1:${port}/${token}`;
+const wrapperScript = readFileSync(PRELOAD_PATH, 'utf8');
+
+const args = process.argv.slice(2);
+
+console.error(`[vk-rc-capture] binary  : ${CC_BIN}`);
+console.error(`[vk-rc-capture] inspect : ${wsUrl}`);
+console.error(`[vk-rc-capture] capture : ${CAPTURE_PATH}`);
+console.error(`[vk-rc-capture] args    : ${args.join(' ') || '(none)'}`);
+
+const captureStream = createWriteStream(CAPTURE_PATH, { flags: 'a' });
+const AUDIT_DYLIB = pathResolve(VAKKA_ROOT, 'dist/libvakka-audit.dylib');
+const childEnv = {
+  ...process.env,
+  BUN_INSPECT: wsUrl,
+  BUN_INSPECT_WAIT: '1',
+  // BUN_PRELOAD runs the script BEFORE the bundle's modules are instantiated,
+  // so our http.request / fetch / WebSocket patches land before axios captures
+  // its references. Inspector path stays as a fallback.
+  BUN_PRELOAD: PRELOAD_PATH,
+};
+if (process.env.VK_AUDIT === '1') {
+  // macOS strips DYLD_* across hardened bun running this wrapper, so set it
+  // directly on the spawn env (re-signed claude has the entitlement).
+  childEnv.DYLD_INSERT_LIBRARIES = AUDIT_DYLIB;
+  console.error(`[vk-rc-capture] audit  : ${AUDIT_DYLIB}`);
+}
+const child = spawn(CC_BIN, args, {
+  env: childEnv,
+  stdio: ['inherit', 'inherit', 'pipe'],
+});
+
+// Route stderr: [vk-cap-data] <json> → capture file. Everything else → real stderr.
+let stderrBuf = '';
+child.stderr.on('data', (chunk) => {
+  stderrBuf += chunk.toString('utf8');
+  let nl;
+  while ((nl = stderrBuf.indexOf('\n')) !== -1) {
+    const line = stderrBuf.slice(0, nl);
+    stderrBuf = stderrBuf.slice(nl + 1);
+    if (line.startsWith('[vk-cap-data] ')) {
+      captureStream.write(line.slice('[vk-cap-data] '.length) + '\n');
+    } else {
+      process.stderr.write(line + '\n');
+    }
+  }
+});
+child.stderr.on('end', () => {
+  if (stderrBuf) process.stderr.write(stderrBuf);
+  captureStream.end();
+});
+
+child.on('exit', (code, signal) => {
+  console.error(`[vk-rc-capture] child exited code=${code} signal=${signal}`);
+  process.exit(typeof code === 'number' ? code : 1);
+});
+
+let attached = false;
+async function attach() {
+  for (let attempt = 0; attempt < 60 && !attached; attempt++) {
+    try {
+      const ws = new WebSocket(wsUrl);
+      await new Promise((resolveOpen, rejectOpen) => {
+        const onOpen = () => { cleanup(); resolveOpen(); };
+        const onErr = (e) => { cleanup(); rejectOpen(e); };
+        const cleanup = () => {
+          ws.removeEventListener('open', onOpen);
+          ws.removeEventListener('error', onErr);
+        };
+        ws.addEventListener('open', onOpen, { once: true });
+        ws.addEventListener('error', onErr, { once: true });
+      });
+
+      let nextId = 0;
+      const pending = new Map();
+      ws.addEventListener('message', (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.id && pending.has(msg.id)) {
+            const { resolve, reject } = pending.get(msg.id);
+            pending.delete(msg.id);
+            if (msg.error) reject(new Error(msg.error.message || JSON.stringify(msg.error)));
+            else resolve(msg.result);
+          }
+        } catch {}
+      });
+      const send = (method, params = {}) => {
+        const id = ++nextId;
+        ws.send(JSON.stringify({ id, method, params }));
+        return new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
+      };
+
+      await send('Runtime.enable');
+      const evalResult = await send('Runtime.evaluate', {
+        expression: wrapperScript,
+        includeCommandLineAPI: false,
+        awaitPromise: true,
+        returnByValue: true,
+      });
+      if (evalResult.exceptionDetails) {
+        console.error('[vk-rc-capture] preload eval threw:', JSON.stringify(evalResult.exceptionDetails, null, 2));
+      } else {
+        console.error('[vk-rc-capture] preload installed');
+      }
+      // Flip BEFORE runIfWaitingForDebugger — if that hangs, we still don't
+      // want the loop to retry or the failure-path to kill the child.
+      attached = true;
+      try {
+        await Promise.race([
+          send('Runtime.runIfWaitingForDebugger'),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('runIfWaitingForDebugger timeout')), 2000)),
+        ]);
+        console.error('[vk-rc-capture] runtime resumed');
+      } catch (e) {
+        console.error('[vk-rc-capture] runIfWaitingForDebugger:', e.message, '(continuing — preload is already in place)');
+      }
+      ws.addEventListener('close', () => {
+        // Bun may close the WS after evaluation completes — that's fine,
+        // our patches live in the JS heap. Don't reconnect.
+      });
+      return;
+    } catch {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
+  if (attached) {
+    // Preload installed at least once; the child is running fine without
+    // further inspector commands. Don't kill it — let the user drive RC.
+    return;
+  }
+  console.error(`[vk-rc-capture] FAILED to attach inspector at ${wsUrl} after 6s`);
+  console.error(`[vk-rc-capture] Bun may not honor BUN_INSPECT in this standalone build.`);
+  console.error(`[vk-rc-capture] Killing child.`);
+  child.kill('SIGTERM');
+}
+
+attach();

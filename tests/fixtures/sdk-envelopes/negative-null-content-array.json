@@ -1,0 +1,10 @@
+{
+  "subtopic": "output",
+  "data": {
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": null
+    }
+  }
+}

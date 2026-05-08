@@ -1,0 +1,21 @@
+/* ── Layout ── */
+.app-shell {
+  display: flex;
+  height: 100%;
+}
+
+[data-layout="phone"] .app-shell {
+  flex-direction: column;
+}
+
+[data-layout="desktop"] .app-shell {
+  flex-direction: row;
+}
+
+/* Phone is single-pane: hide the sidebar so the routed main panel fills the
+   viewport. The sidebar is still rendered into the tree (its onSelect/nav
+   wiring keeps working when surfaced on desktop or by future drawer UI). */
+[data-layout="phone"] .sidebar {
+  display: none;
+}
+

@@ -1,0 +1,156 @@
+/* Transcript depth indicator — sticky bar at top of every message-list,
+   showing loaded / total with a directional progress rail.
+   Used by both ChatView (live) and PreviewView (read-only jsonl).
+   See mocks/transcript-depth-indicator.html for full state matrix. */
+
+@keyframes vk-depth-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(280%); }
+}
+
+.depth-bar {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 16px auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: linear-gradient(
+    to bottom,
+    var(--bg-1) 0%,
+    color-mix(in oklab, var(--bg-1), transparent 8%) 100%
+  );
+  border-bottom: 1px solid var(--border, #26262d);
+  backdrop-filter: blur(8px);
+  color: var(--fg-2);
+  font-size: 11px;
+  user-select: none;
+}
+
+.depth-bar .icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-3);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.depth-bar .label-text {
+  color: var(--fg-1);
+  font-weight: 500;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+.depth-bar .label-text strong {
+  color: var(--fg-0);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.depth-bar .label-text .of {
+  color: var(--fg-3);
+}
+
+.depth-bar .hint {
+  color: var(--fg-3);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.depth-bar .rail {
+  position: relative;
+  height: 4px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.depth-bar .rail .fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--accent-c, var(--accent, #c4f042));
+  border-radius: 2px;
+  transition: width 220ms ease;
+}
+/* Reverse: fill anchored to right — visually maps to "you have the tail." */
+.depth-bar .rail.reverse .fill {
+  right: 0;
+  left: auto;
+}
+.depth-bar .rail .shimmer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 35%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--blue, #6aa3ff), transparent 60%) 50%,
+    transparent 100%
+  );
+  animation: vk-depth-shimmer 1.4s ease-in-out infinite;
+}
+
+.depth-bar.is-loading .icon { color: var(--blue, #6aa3ff); }
+.depth-bar.is-loading .rail .fill { background: var(--blue, #6aa3ff); }
+
+.depth-bar.is-complete .icon { color: var(--accent-c, var(--accent, #c4f042)); }
+.depth-bar.is-partial .icon { color: var(--accent-c, var(--accent, #c4f042)); }
+
+.depth-bar.is-heavy {
+  border-bottom-color: var(--amber-edge, #f5b94244);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--amber-dim, #f5b94220), var(--bg-1) 60%),
+    var(--bg-1)
+  );
+}
+.depth-bar.is-heavy .icon { color: var(--amber, #f5b942); }
+.depth-bar.is-heavy .rail .fill { background: var(--amber, #f5b942); }
+.depth-bar.is-heavy .label-text strong { color: var(--amber, #f5b942); }
+
+/* Hover tooltip — diagnostic counters. Kept opt-in via :hover so the bar
+   stays quiet by default but the data is one mouseover away. */
+.depth-bar { position: relative; }
+.depth-bar .tooltip {
+  position: absolute;
+  left: 14px;
+  top: calc(100% + 6px);
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong, #34343d);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 10.5px;
+  color: var(--fg-1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  width: 260px;
+  z-index: 6;
+  display: none;
+}
+.depth-bar:hover .tooltip { display: block; }
+.depth-bar .tooltip dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+}
+.depth-bar .tooltip dt { color: var(--fg-3); }
+.depth-bar .tooltip dd {
+  color: var(--fg-0);
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.depth-bar .tooltip .heavy-note {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border, #26262d);
+  color: var(--amber, #f5b942);
+  font-size: 10.5px;
+  line-height: 1.45;
+}

@@ -1,0 +1,137 @@
+/* ── Plan Proposal Card — Option C aesthetic ──
+   Pending = dashed border + violet left rail + brackets head + serif
+   plan body. Refine field always available. */
+.plan-proposal-card {
+  width: 100%;
+  border: 1px dashed var(--border);
+  border-left: 2px solid var(--violet-soft);
+  border-radius: 0;
+  padding: 14px 16px 16px;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  position: relative;
+}
+
+.plan-proposal-card:not(.resolved) {
+  box-shadow: 0 0 0 1px var(--violet-soft-edge), 0 0 18px -6px var(--violet-soft-edge);
+  animation: urgentPulseViolet 2.4s ease-in-out 0s 3;
+}
+
+@keyframes urgentPulseViolet {
+  0%, 100% { box-shadow: 0 0 0 1px var(--violet-soft-edge), 0 0 18px -6px var(--violet-soft-edge); }
+  50%      { box-shadow: 0 0 0 1px var(--violet-soft-edge), 0 0 26px -2px var(--violet-soft-edge); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-proposal-card:not(.resolved) { animation: none; }
+}
+
+.plan-proposal-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.plan-proposal-title::before {
+  content: "[ Plan · ExitPlanMode";
+  color: var(--violet-soft);
+  font-weight: 600;
+  margin-right: 4px;
+}
+.plan-proposal-title::after {
+  content: " ]";
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.plan-proposal-body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  background: transparent;
+  margin: 4px 0 12px;
+  padding: 0 0 0 14px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.plan-proposal-body h1,
+.plan-proposal-body h2,
+.plan-proposal-body h3 {
+  font-family: var(--font-serif);
+  color: var(--text-primary);
+  font-weight: 400;
+  border-bottom: none;
+}
+
+.plan-proposal-body h1 { font-size: 20px; }
+.plan-proposal-body h2 { font-size: 17px; }
+.plan-proposal-body h3 { font-size: 15px; }
+
+.plan-proposal-body code,
+.plan-proposal-body pre {
+  font-family: var(--font-mono);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.plan-proposal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  align-items: center;
+}
+.plan-proposal-actions::before {
+  content: "→";
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  margin-right: 4px;
+}
+
+.plan-proposal-actions .btn {
+  min-height: 36px;
+}
+
+.plan-proposal-refine {
+  margin-top: 8px;
+}
+
+.plan-proposal-textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 10px 12px;
+  min-height: 60px;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 100ms;
+}
+
+.plan-proposal-textarea::placeholder { color: var(--text-faint); }
+
+.plan-proposal-textarea:focus {
+  outline: none;
+  border-style: solid;
+  border-color: var(--violet-soft);
+}
+
+/* ── Resolved (one-line) ── */
+.plan-proposal-card.resolved {
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--text-faint);
+  background: var(--bg);
+  padding: 8px 14px;
+  animation: none;
+  box-shadow: none;
+}

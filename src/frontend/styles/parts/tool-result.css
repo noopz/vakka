@@ -1,0 +1,121 @@
+/* ── Tool Result ── */
+.tool-result {
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.tool-result-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.tool-result-header:hover {
+  color: var(--text-secondary);
+}
+
+.tool-result-icon {
+  flex-shrink: 0;
+  color: var(--success);
+}
+
+.tool-result-error .tool-result-icon {
+  color: var(--danger);
+}
+
+.tool-result-name {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.tool-result-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tool-result-toggle {
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.tool-result-output {
+  margin: 6px 0 4px 20px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.tool-result-error .tool-result-output {
+  border-color: var(--danger);
+  background: var(--error-bg);
+}
+
+.tool-result-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tool-input-diff,
+.tool-input-content,
+.tool-input-command,
+.tool-input-json {
+  margin: 6px 0 4px 20px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.tool-input-diff .diff-line {
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+}
+
+.tool-input-diff .diff-removed {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.tool-input-diff .diff-added {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.tool-input-multi {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tool-input-multi-label {
+  margin-left: 20px;
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+

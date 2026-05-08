@@ -1,0 +1,49 @@
+#!/bin/bash
+# vk-claude-repin — re-pin + re-sign ~/.vakka/claude-2.1.126.
+#
+# Run on demand, or via the launchd LaunchAgent (vk-claude-repin.plist) which
+# fires once a day. Safe to re-run: noop if pin is intact, regenerate if not.
+
+set -e
+
+VAKKA_ROOT="${VAKKA_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+SRC="${CC_SOURCE:-$HOME/.local/share/claude/versions/2.1.126}"
+DST="${CC_PIN:-$HOME/.vakka/claude-2.1.126}"
+ENT="${CC_ENT:-$HOME/.vakka/cc-entitlements.plist}"
+
+if [ ! -f "$ENT" ]; then
+  echo "vk-claude-repin: entitlements plist missing at $ENT" >&2
+  exit 1
+fi
+
+if [ ! -f "$SRC" ]; then
+  echo "vk-claude-repin: source binary missing at $SRC" >&2
+  echo "vk-claude-repin: Anthropic may have rolled the version forward." >&2
+  exit 2
+fi
+
+needs_repin=0
+if [ ! -f "$DST" ]; then
+  needs_repin=1
+elif ! cmp -s "$SRC" "$DST"; then
+  # Source bytes changed — Anthropic may have force-updated this version slot.
+  # Re-pin and re-sign.
+  needs_repin=1
+fi
+
+if [ "$needs_repin" = "0" ]; then
+  # Verify the pin still has the dyld-env entitlement; if not, re-sign.
+  if ! codesign -d --entitlements - "$DST" 2>/dev/null | grep -q "allow-dyld-environment-variables"; then
+    needs_repin=1
+  fi
+fi
+
+if [ "$needs_repin" = "0" ]; then
+  exit 0
+fi
+
+echo "vk-claude-repin: re-pinning $DST from $SRC" >&2
+mkdir -p "$(dirname "$DST")"
+cp "$SRC" "$DST"
+codesign --force --sign - --entitlements "$ENT" --options runtime "$DST"
+echo "vk-claude-repin: done" >&2

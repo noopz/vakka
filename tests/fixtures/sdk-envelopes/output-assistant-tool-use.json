@@ -1,0 +1,28 @@
+{
+  "subtopic": "output",
+  "data": {
+    "type": "assistant",
+    "message": {
+      "id": "msg_01ToolUseExample",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-sonnet-4-7",
+      "content": [
+        { "type": "text", "text": "Let me read that file." },
+        {
+          "type": "tool_use",
+          "id": "toolu_01ReadAbc",
+          "name": "Read",
+          "input": { "file_path": "/tmp/example.ts" }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 3,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 19829,
+        "output_tokens": 193
+      }
+    }
+  }
+}
