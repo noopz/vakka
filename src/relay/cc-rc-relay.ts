@@ -136,6 +136,14 @@ export function createCcRcRelay(opts: { log?: RelayLogger; onEvent?: RelayEventH
     return presented !== null && presented === s.workerJwt;
   }
 
+  // ── GET /healthz ─────────────────────────────────────────────────────
+  // Liveness probe for the cc-preload.js fetch hook. Mounted before the
+  // catch-all logger so the high-frequency probe traffic stays out of the
+  // ndjson capture file.
+  router.get("/healthz", (_req, res) => {
+    res.json({ ok: true });
+  });
+
   // Catch-all logger — runs for every incoming request, including ones that
   // fall through to a 404 or get rejected with 401 by a handler. Mounted
   // BEFORE the route handlers so it always sees the request.
