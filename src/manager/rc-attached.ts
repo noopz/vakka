@@ -226,7 +226,7 @@ function findRegistryBySessionId(sessionId: string): RcSessionInfo | undefined {
 }
 
 export function dedupUserInput(sessionId: string, content: string): boolean {
-  const key = `${sessionId} ${content}`;
+  const key = `${sessionId} ${content}`;
   if (recentUserInputs.has(key)) return true;
   recentUserInputs.add(key);
   recentUserInputsOrder.push(key);
