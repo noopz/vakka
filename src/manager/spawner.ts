@@ -82,7 +82,7 @@ export function healthCheck(db: Database): number {
     // rc-attached sessions are owned by an external CC process; Vakka never
     // spawns them and has no PID to track. Skip — their liveness is the
     // relay SSE connection, not a local process.
-    if (session.project_path === RC_ATTACHED_PROJECT_PATH) continue;
+    if (session.control_mode === 'rc-attached') continue;
     if (session.pid == null) {
       // No PID recorded — treat as dead
       logger.warn("spawner", `Session ${session.id} has no PID, marking as failed`);

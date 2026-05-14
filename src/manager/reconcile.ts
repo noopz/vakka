@@ -34,6 +34,11 @@ export function reconcileOnStartup(db: Database): ReconcileResult {
         `Session ${session.id.slice(0, 8)}: PID ${session.pid ?? "null"} not alive — reaped`,
       );
     } else {
+      // rc-attached/rc-spawned sessions don't speak Vekka's MQTT hello protocol —
+      // their liveness is signalled via the relay's sse_open path, not awaitHello.
+      if (session.control_mode === 'rc-attached' || session.control_mode === 'rc-spawned') {
+        continue;
+      }
       pending.push(session);
     }
   }
