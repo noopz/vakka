@@ -1,6 +1,6 @@
 import type { Database } from "bun:sqlite";
 import { join } from "node:path";
-import { mkdirSync, openSync } from "node:fs";
+import { mkdirSync, openSync, writeSync } from "node:fs";
 import { logger } from "../shared/logger.js";
 import { getActiveSessions, updateSessionStatus } from "../db/queries.js";
 import { RC_ATTACHED_PROJECT_PATH } from "../shared/types.js";
@@ -49,6 +49,62 @@ export function spawnAgent(config: {
   logger.info("spawner", `Spawned agent for session ${config.sessionId} with PID ${pid} (log: ${logPath})`);
 
   return { pid };
+}
+
+// Spawn `claude --remote-control` in a real pty (Bun 1.3.5+ native terminal API)
+// with cc-preload.js wired in so worker traffic is rewritten to the local relay.
+// We own the resulting PID; the existing rc-attached observer (rc-attached.ts)
+// picks up the session via the manifest at ~/.claude/sessions/<pid>.json once
+// CC dials /bridge.
+//
+// Trust-dialog dismissal is the caller's responsibility (see handleSpawn in
+// manager/index.ts) — the spike showed a fixed-time send is fragile, so the
+// caller drives input based on observing the pty output.
+export function spawnRcClaude(config: {
+  projectPath: string;
+  logPath: string;
+}): {
+  pid: number;
+  exited: Promise<number>;
+  writeInput: (s: string) => void;
+} {
+  const PRELOAD = join(VAKKA_ROOT, "src", "agent", "cc-preload.js");
+  const logFd = openSync(config.logPath, "w");
+  const proc = Bun.spawn(
+    ["claude", "--remote-control"],
+    {
+      cwd: config.projectPath,
+      env: {
+        ...process.env,
+        BUN_OPTIONS: `--preload ${PRELOAD}`,
+        TERM: "xterm-256color",
+      },
+      terminal: {
+        cols: 120,
+        rows: 40,
+        name: "xterm-256color",
+        data(_t: unknown, chunk: Uint8Array | string) {
+          try {
+            const s = typeof chunk === "string" ? chunk : new TextDecoder().decode(chunk);
+            writeSync(logFd, s);
+          } catch {
+            // swallow — log fd may have closed
+          }
+        },
+      },
+    } as Parameters<typeof Bun.spawn>[1],
+  );
+
+  const pid = proc.pid;
+  logger.info("spawner", `Spawned rc-claude PID ${pid} cwd=${config.projectPath} (log: ${config.logPath})`);
+
+  return {
+    pid,
+    exited: proc.exited as Promise<number>,
+    writeInput: (s: string) => {
+      try { (proc as { terminal?: { write: (s: string) => void } }).terminal?.write(s); } catch {}
+    },
+  };
 }
 
 // Check if a process is still alive (signal 0 = existence check)
