@@ -127,10 +127,11 @@ export function createSession(
   model?: string,
   resumeFrom?: string,
   resumeFromExternal?: string,
+  controlMode?: string,
 ) {
   return request<any>("/api/sessions", {
     method: "POST",
-    body: JSON.stringify({ projectPath, model, resumeFrom, resumeFromExternal }),
+    body: JSON.stringify({ projectPath, model, resumeFrom, resumeFromExternal, controlMode }),
   });
 }
 

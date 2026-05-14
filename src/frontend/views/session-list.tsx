@@ -71,7 +71,7 @@ function ProjectPickerModal({
     setCreating(path);
     setError("");
     try {
-      const session = await createSession(path, "opus");
+      const session = await createSession(path, "opus", undefined, undefined, "rc-spawned");
       onCreated(session);
     } catch (err: any) {
       setError(err.message || "Failed to create session");

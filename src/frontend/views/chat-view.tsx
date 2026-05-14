@@ -332,7 +332,7 @@ function PreviewView({ preview }: PreviewViewProps) {
     try {
       const resumeFrom = c.origin === "vakka" ? c.vakka_session_id ?? undefined : undefined;
       const resumeFromExternal = c.origin === "external" ? c.sdk_session_id : undefined;
-      const res = await createSession(preview.project_path, undefined, resumeFrom, resumeFromExternal);
+      const res = await createSession(preview.project_path, undefined, resumeFrom, resumeFromExternal, "rc-spawned");
       const newId = res.sessionId ?? res.id;
       if (!newId) {
         committing.value = false;

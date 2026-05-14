@@ -186,7 +186,7 @@ export function ProjectHomeRoute({ slug }: { slug: string }) {
     if (!project || spawning) return;
     setSpawning(true);
     try {
-      const res = await createSession(project.path);
+      const res = await createSession(project.path, undefined, undefined, undefined, "rc-spawned");
       const newId = res?.sessionId ?? res?.id;
       // Refresh sessions in the background so the sidebar reflects the new row.
       fetchSessions()
