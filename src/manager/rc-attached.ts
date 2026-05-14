@@ -85,7 +85,7 @@ export async function awaitManifestForPid(
   pid: number,
   exited: Promise<unknown>,
   timeoutMs = 10_000,
-): Promise<{ cseId: string; cwd: string } | { error: string }> {
+): Promise<{ cseId: string; cwd: string; sdkSessionId: string } | { error: string }> {
   const manifestPath = join(CC_SESSIONS_DIR, `${pid}.json`);
   const deadline = Date.now() + timeoutMs;
   let exitedFlag = false;
@@ -100,8 +100,9 @@ export async function awaitManifestForPid(
       const manifestPid = data.pid as number | undefined;
       const bsid = data.bridgeSessionId as string | undefined;
       const cwd = data.cwd as string | undefined;
-      if (typeof manifestPid === "number" && manifestPid === pid && bsid && cwd) {
-        return { cseId: `cse_${bareSessionId(bsid)}`, cwd };
+      const sdkSessionId = data.sessionId as string | undefined;
+      if (typeof manifestPid === "number" && manifestPid === pid && bsid && cwd && sdkSessionId) {
+        return { cseId: `cse_${bareSessionId(bsid)}`, cwd, sdkSessionId };
       }
     } catch {
       // file not present yet; keep polling
