@@ -223,7 +223,7 @@ function handleSpawn(commandId: string, data: Record<string, any>): void {
   const controlMode: string = data.controlMode ?? "sdk-wrapper";
 
   if (controlMode === "rc-spawned") {
-    handleSpawnRcClaude(commandId, resolvedPath, model).catch((err) => {
+    handleSpawnRcClaude(commandId, resolvedPath, model, data).catch((err) => {
       logger.error("manager", `rc-spawned spawn failed`, err);
       publishResponse(commandId, { ok: false, error: err?.message ?? String(err) });
     });
@@ -291,7 +291,13 @@ async function handleSpawnRcClaude(
   commandId: string,
   projectPath: string,
   model: string,
+  data: Record<string, any>,
 ): Promise<void> {
+  const resumeSessionId: string | undefined = data.resumeSessionId;
+  const forkSession: boolean = data.forkSession === true;
+  const resumedFromVakkaId: string | undefined = data.resumedFromVakkaId;
+  const forkedFromSdkId: string | undefined = data.forkedFromSdkId;
+
   // Trust-dialog pre-check (read-only). If ~/.claude.json already records
   // hasTrustDialogAccepted=true for this directory, skip the dismissal step;
   // otherwise we'll watch the pty log for the dialog marker post-spawn.
@@ -302,7 +308,7 @@ async function handleSpawnRcClaude(
   const startTimeMs = Date.now();
   const logPath = join(logDir, `rc-${startTimeMs}.log`);
 
-  const { pid, exited, writeInput } = spawnRcClaude({ projectPath, logPath });
+  const { pid, exited, writeInput } = spawnRcClaude({ projectPath, logPath, resumeSessionId, forkSession });
   logger.info(
     "manager",
     `Spawned rc-claude PID ${pid} for ${projectPath} (log: ${logPath})`,
@@ -319,7 +325,7 @@ async function handleSpawnRcClaude(
     return;
   }
 
-  const { cseId } = result;
+  const { cseId, sdkSessionId } = result;
 
   // Upsert the session row now that we know the cseId. Both rc-attached's
   // announce() and this handler race to write the row — whichever arrives
@@ -330,16 +336,30 @@ async function handleSpawnRcClaude(
   // only ever rewrite the sentinel — a non-sentinel project_path means
   // some other flow owns this row and we must not stomp it.
   db.query(
-    `INSERT INTO sessions (id, project_path, model, pid, control_mode, start_time_ms)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+    `INSERT INTO sessions (id, project_path, model, pid, control_mode, start_time_ms, sdk_session_id, forked_from_sdk_id)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
      ON CONFLICT(id) DO UPDATE SET
        project_path = excluded.project_path,
        model = excluded.model,
        pid = excluded.pid,
        control_mode = excluded.control_mode,
-       start_time_ms = excluded.start_time_ms
+       start_time_ms = excluded.start_time_ms,
+       sdk_session_id = excluded.sdk_session_id,
+       forked_from_sdk_id = excluded.forked_from_sdk_id
      WHERE sessions.project_path = '<rc-attached>'`,
-  ).run(cseId, projectPath, model, pid, "rc-spawned", startTimeMs);
+  ).run(cseId, projectPath, model, pid, "rc-spawned", startTimeMs, sdkSessionId, forkedFromSdkId ?? null);
+
+  // For resumed sessions, copy the prior conversation's messages so the chat
+  // view has display continuity. CC has the real transcript via resume/fork;
+  // these rows are pure UI state.
+  if (resumedFromVakkaId) {
+    try {
+      const copied = copyMessages(db, resumedFromVakkaId, cseId);
+      logger.info("manager", `Copied ${copied} messages from ${resumedFromVakkaId.slice(0, 8)} → ${cseId.slice(0, 8)}`);
+    } catch (err) {
+      logger.warn("manager", `Failed to copy messages from ${resumedFromVakkaId}`, err);
+    }
+  }
 
   publishResponse(commandId, { ok: true, sessionId: cseId, pid });
   logger.info(
