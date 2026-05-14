@@ -316,11 +316,12 @@ export function createApiRouter(db: Database, mqttClient: MqttClient, rcRelay?: 
 
   router.post("/sessions", (req, res) => {
     if (managerOfflineGuard(res)) return;
-    const { projectPath, model, resumeFrom, resumeFromExternal } = req.body as {
+    const { projectPath, model, resumeFrom, resumeFromExternal, controlMode } = req.body as {
       projectPath: string;
       model?: string;
       resumeFrom?: string;
       resumeFromExternal?: string;
+      controlMode?: "sdk-wrapper" | "rc-spawned";
     };
     if (!projectPath) {
       res.status(400).json({ error: "projectPath is required" });
@@ -409,7 +410,7 @@ export function createApiRouter(db: Database, mqttClient: MqttClient, rcRelay?: 
 
       mqttClient.publish(
         commandTopics.spawn,
-        JSON.stringify({ commandId, projectPath, model, resumeSessionId, resumedFromVakkaId: resumeFrom, forkSession, forkedFromSdkId }),
+        JSON.stringify({ commandId, projectPath, model, resumeSessionId, resumedFromVakkaId: resumeFrom, forkSession, forkedFromSdkId, ...(controlMode ? { controlMode } : {}) }),
       );
 
       logger.info("api", `Spawn command sent: ${commandId} for ${projectPath}`);
