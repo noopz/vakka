@@ -381,16 +381,29 @@ export function makeRelayEventHandler(opts: Omit<RcAttachedBridgeOpts, "relay">)
     });
     if (db) {
       try {
-        // sessions.project_path FK → projects.path. Ensure the sentinel
-        // project exists before inserting the session row.
-        db.query(
-          `INSERT OR IGNORE INTO projects (path, name, discovered_at, pinned)
-           VALUES (?1, ?2, datetime('now'), 0)`,
-        ).run("<rc-attached>", "RC Attached");
-        db.query(
-          `INSERT OR IGNORE INTO sessions (id, project_path, model)
-           VALUES (?1, ?2, ?3)`,
-        ).run(sessionId, "<rc-attached>", "rc-attached");
+        // announce() is shared between two flows:
+        //   1. True rc-attached: the user spawned `claude --remote-control`
+        //      themselves; no Vekka-side row exists yet, so we INSERT the
+        //      sentinel project_path and control_mode='rc-attached'.
+        //   2. rc-spawned: Vekka spawned CC itself and already created a
+        //      session row with the real project_path and
+        //      control_mode='rc-spawned'. We must NOT clobber that row.
+        // The SELECT below distinguishes the two cases.
+        const existing = db.query(
+          `SELECT 1 FROM sessions WHERE id = ?1`,
+        ).get(sessionId);
+        if (!existing) {
+          // sessions.project_path FK → projects.path. Ensure the sentinel
+          // project exists before inserting the session row.
+          db.query(
+            `INSERT OR IGNORE INTO projects (path, name, discovered_at, pinned)
+             VALUES (?1, ?2, datetime('now'), 0)`,
+          ).run("<rc-attached>", "RC Attached");
+          db.query(
+            `INSERT INTO sessions (id, project_path, model, control_mode)
+             VALUES (?1, ?2, ?3, ?4)`,
+          ).run(sessionId, "<rc-attached>", "rc-attached", "rc-attached");
+        }
       } catch (e) { log(`db insert failed`, e); }
     }
     pub(sessionId, "hello", { origin: "rc-attached", cseId, startTime: now });
