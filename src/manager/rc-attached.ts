@@ -69,6 +69,44 @@ function lookupRcWorkerFromManifest(cseId: string): { pid: number; cwd: string }
   return null;
 }
 
+// Wait for CC to write its session manifest. CC writes ~/.claude/sessions/<pid>.json
+// shortly after dialing /bridge — that file is what gives us the cseId we'll use
+// as the Vekka session id. We poll every 200ms up to timeoutMs; if the spawned
+// claude process exits first (via the `exited` promise), we bail with an error.
+//
+// The pid field IN the manifest must match the argument — a stale manifest from
+// a recycled PID (claude crashed, OS reused the pid, our scan finds the old file)
+// would otherwise return someone else's bridgeSessionId.
+export async function awaitManifestForPid(
+  pid: number,
+  exited: Promise<unknown>,
+  timeoutMs = 10_000,
+): Promise<{ cseId: string; cwd: string } | { error: string }> {
+  const manifestPath = join(CC_SESSIONS_DIR, `${pid}.json`);
+  const deadline = Date.now() + timeoutMs;
+  let exitedFlag = false;
+  exited.then(() => { exitedFlag = true; }, () => { exitedFlag = true; });
+
+  while (Date.now() < deadline) {
+    if (exitedFlag) {
+      return { error: "claude exited before manifest" };
+    }
+    try {
+      const data = JSON.parse(readFileSync(manifestPath, "utf-8")) as Record<string, unknown>;
+      const manifestPid = data.pid as number | undefined;
+      const bsid = data.bridgeSessionId as string | undefined;
+      const cwd = data.cwd as string | undefined;
+      if (typeof manifestPid === "number" && manifestPid === pid && bsid && cwd) {
+        return { cseId: bareSessionId(bsid), cwd };
+      }
+    } catch {
+      // file not present yet; keep polling
+    }
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return { error: "manifest poll timed out" };
+}
+
 const RELAY_LOG = join(homedir(), ".vakka", "rc-relay-events.ndjson");
 const UNKNOWNS_LOG = join(homedir(), ".vakka", "rc-unknowns.ndjson");
 
