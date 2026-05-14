@@ -46,7 +46,9 @@ function bareSessionId(id: string): string {
 //
 // Strings in the CC binary at ~/.local/share/claude/versions/<ver> confirm
 // `bridgeSessionId`/`bridgeSessionSeq` are CC's own field names.
-function lookupRcWorkerFromManifest(cseId: string): { pid: number; cwd: string } | null {
+function lookupRcWorkerFromManifest(
+  cseId: string,
+): { pid: number; cwd: string; sdkSessionId: string | null } | null {
   const target = bareSessionId(cseId);
   let entries: string[];
   try { entries = readdirSync(CC_SESSIONS_DIR); } catch { return null; }
@@ -64,7 +66,10 @@ function lookupRcWorkerFromManifest(cseId: string): { pid: number; cwd: string }
     if (typeof pid !== "number" || !cwd) continue;
     // Stale-PID guard: if the manifest's PID is dead, ignore.
     try { process.kill(pid, 0); } catch { continue; }
-    return { pid, cwd };
+    // `sessionId` is CC's conversation uuid (= Vekka's sdk_session_id);
+    // distinct from `bridgeSessionId`. Best-effort — older CCs may omit it.
+    const sdkSessionId = typeof data.sessionId === "string" ? data.sessionId : null;
+    return { pid, cwd, sdkSessionId };
   }
   return null;
 }
@@ -404,10 +409,15 @@ export function makeRelayEventHandler(opts: Omit<RcAttachedBridgeOpts, "relay">)
             `INSERT OR IGNORE INTO projects (path, name, discovered_at, pinned)
              VALUES (?1, ?2, datetime('now'), 0)`,
           ).run("<rc-attached>", "RC Attached");
+          // Capture CC's conversation uuid so this externally-attached session
+          // is itself resumable later. Best-effort: the manifest may not be
+          // written yet at first announce — sdk_session_id stays NULL then.
+          const sdkSessionId =
+            lookupRcWorkerFromManifest(cseId)?.sdkSessionId ?? null;
           db.query(
-            `INSERT INTO sessions (id, project_path, model, control_mode)
-             VALUES (?1, ?2, ?3, ?4)`,
-          ).run(sessionId, "<rc-attached>", "rc-attached", "rc-attached");
+            `INSERT INTO sessions (id, project_path, model, control_mode, sdk_session_id)
+             VALUES (?1, ?2, ?3, ?4, ?5)`,
+          ).run(sessionId, "<rc-attached>", "rc-attached", "rc-attached", sdkSessionId);
         }
       } catch (e) { log(`db insert failed`, e); }
     }
