@@ -63,6 +63,8 @@ export function spawnAgent(config: {
 export function spawnRcClaude(config: {
   projectPath: string;
   logPath: string;
+  resumeSessionId?: string;
+  forkSession?: boolean;
 }): {
   pid: number;
   exited: Promise<number>;
@@ -70,8 +72,13 @@ export function spawnRcClaude(config: {
 } {
   const PRELOAD = join(VAKKA_ROOT, "src", "agent", "cc-preload.js");
   const logFd = openSync(config.logPath, "w");
+  const args = [
+    "claude", "--remote-control",
+    ...(config.resumeSessionId ? ["--resume", config.resumeSessionId] : []),
+    ...(config.forkSession ? ["--fork-session"] : []),
+  ];
   const proc = Bun.spawn(
-    ["claude", "--remote-control"],
+    args,
     {
       cwd: config.projectPath,
       env: {
