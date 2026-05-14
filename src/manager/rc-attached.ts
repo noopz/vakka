@@ -77,6 +77,10 @@ function lookupRcWorkerFromManifest(cseId: string): { pid: number; cwd: string }
 // The pid field IN the manifest must match the argument — a stale manifest from
 // a recycled PID (claude crashed, OS reused the pid, our scan finds the old file)
 // would otherwise return someone else's bridgeSessionId.
+//
+// We return the cseId in the `cse_…` form (the canonical Vekka session id, matching
+// what the relay observes in URLs and what rc-attached's announce() uses for its
+// row id). The manifest writes `session_…`; we normalize.
 export async function awaitManifestForPid(
   pid: number,
   exited: Promise<unknown>,
@@ -97,7 +101,7 @@ export async function awaitManifestForPid(
       const bsid = data.bridgeSessionId as string | undefined;
       const cwd = data.cwd as string | undefined;
       if (typeof manifestPid === "number" && manifestPid === pid && bsid && cwd) {
-        return { cseId: bareSessionId(bsid), cwd };
+        return { cseId: `cse_${bareSessionId(bsid)}`, cwd };
       }
     } catch {
       // file not present yet; keep polling
