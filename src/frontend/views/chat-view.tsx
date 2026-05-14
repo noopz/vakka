@@ -1025,6 +1025,14 @@ export function ChatView() {
       .then((res) => {
         if (res?.resumed) {
           fetchSessions().then((s) => { sessions.value = s; }).catch(() => {});
+          // rc-spawned sessions can't resume in place — the backend revives
+          // them under a fresh id. Re-target the chat tab so subsequent sends
+          // and the URL track the live session.
+          if (res.sessionId && res.sessionId !== sessionId) {
+            currentSessionId.value = res.sessionId;
+            const slug = projects.value.find((p) => p.path === session?.project_path)?.display_slug;
+            if (slug) nav.goSession(slug, res.sessionId, true);
+          }
         }
       })
       .catch((err: Error) => {

@@ -707,6 +707,56 @@ export function createApiRouter(db: Database, mqttClient: MqttClient, rcRelay?: 
             res.status(500).json({ error: data.error ?? "Auto-resume failed" });
             return;
           }
+          // sdk-wrapper sessions resume in place under the same id. rc-spawned
+          // sessions can't — CC mints a fresh cseId from its manifest, so the
+          // manager replies with a different sessionId. data.sessionId tells
+          // us which path ran.
+          const resumedId: string = data.sessionId ?? sessionId;
+          if (resumedId !== sessionId) {
+            // rc-spawned resume: deliver the buffered input down the relay to
+            // the new CC instance, then hand the new id back so the frontend
+            // re-targets its chat tab.
+            void (async () => {
+              // The rc-attached observer registers the new cseId when it sees
+              // the first worker frame. handleSpawnRcClaude already waited for
+              // CC's manifest, so it's usually registered by now — poll briefly
+              // to close the race.
+              let rcInfo = getRcSession(resumedId);
+              for (let i = 0; i < 20 && !rcInfo; i++) {
+                await new Promise((r) => setTimeout(r, 100));
+                rcInfo = getRcSession(resumedId);
+              }
+              if (rcInfo && rcRelay) {
+                // Seed the dedup so CC's echo of this user turn doesn't
+                // re-persist the row copyMessages already brought across.
+                dedupUserInput(resumedId, text);
+                rcRelay.pushFrame(rcInfo.cseId, {
+                  event: "client_event",
+                  data: {
+                    event_type: "user",
+                    source: "client",
+                    payload: {
+                      client_platform: "vakka",
+                      message: { role: "user", content: text },
+                      type: "user",
+                      session_id: resumedId,
+                    },
+                  },
+                });
+                logger.info(
+                  "api",
+                  `[${sessionId.slice(0, 8)}] auto-resumed as rc-spawned ${resumedId.slice(0, 8)} — user: "${text.slice(0, 100)}"`,
+                );
+              } else {
+                logger.warn(
+                  "api",
+                  `[${resumedId.slice(0, 8)}] rc-spawned resume is up but relay never registered it — first message not delivered`,
+                );
+              }
+              res.json({ ok: true, sessionId: resumedId, resumed: true });
+            })();
+            return;
+          }
           const t = topics(sessionId);
           mqttClient.publish(t.input, JSON.stringify({ text, images }));
           logger.info(

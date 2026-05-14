@@ -466,6 +466,33 @@ function handleResume(commandId: string, data: Record<string, any>): void {
     return;
   }
 
+  // rc-spawned sessions can't resume in-place: `claude --remote-control
+  // --resume` makes CC mint a fresh cseId from its manifest, so the revived
+  // session necessarily has a new id. handleSpawnRcClaude copies the prior
+  // messages across and publishes the new cseId as the response sessionId;
+  // the caller (POST /messages auto-resume) re-targets to it.
+  if (session.control_mode === "rc-spawned") {
+    handleSpawnRcClaude(commandId, session.project_path, session.model, {
+      resumeSessionId: session.sdk_session_id,
+      resumedFromVakkaId: sessionId,
+    }).catch((err) => {
+      logger.error("manager", `rc-spawned auto-resume failed`, err);
+      publishResponse(commandId, { ok: false, error: err?.message ?? String(err) });
+    });
+    return;
+  }
+
+  // rc-attached sessions were spawned by the user outside Vakka under the
+  // `<rc-attached>` sentinel project_path — there's no real cwd to relaunch
+  // CC in, so they can't be auto-resumed.
+  if (session.control_mode === "rc-attached") {
+    publishResponse(commandId, {
+      ok: false,
+      error: "rc-attached sessions can't be auto-resumed — restart Claude Code directly",
+    });
+    return;
+  }
+
   updateSessionStatus(db, sessionId, "starting");
 
   const { pid } = spawnAgent({
