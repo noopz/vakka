@@ -321,17 +321,25 @@ async function handleSpawnRcClaude(
 
   const { cseId } = result;
 
-  // INSERT now that we know the cseId. announce() in rc-attached.ts will
-  // SELECT and skip its own INSERT (commit 5), preserving this real
-  // project_path instead of the `<rc-attached>` sentinel.
-  createSession(db, {
-    id: cseId,
-    project_path: projectPath,
-    model,
-    pid,
-    control_mode: "rc-spawned",
-    start_time_ms: startTimeMs,
-  });
+  // Upsert the session row now that we know the cseId. Both rc-attached's
+  // announce() and this handler race to write the row — whichever arrives
+  // first wins INSERT, the loser must UPDATE. Commit 5 guards the
+  // observer-loses direction (SELECT-then-skip); this ON CONFLICT clause
+  // guards the observer-wins direction (overwrite the `<rc-attached>`
+  // sentinel with the real path/mode/pid). The WHERE guard ensures we
+  // only ever rewrite the sentinel — a non-sentinel project_path means
+  // some other flow owns this row and we must not stomp it.
+  db.query(
+    `INSERT INTO sessions (id, project_path, model, pid, control_mode, start_time_ms)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+     ON CONFLICT(id) DO UPDATE SET
+       project_path = excluded.project_path,
+       model = excluded.model,
+       pid = excluded.pid,
+       control_mode = excluded.control_mode,
+       start_time_ms = excluded.start_time_ms
+     WHERE sessions.project_path = '<rc-attached>'`,
+  ).run(cseId, projectPath, model, pid, "rc-spawned", startTimeMs);
 
   publishResponse(commandId, { ok: true, sessionId: cseId, pid });
   logger.info(
