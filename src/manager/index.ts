@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { resolve, join } from "node:path";
 import { homedir } from "node:os";
 import type { MqttClient } from "mqtt";
 
@@ -16,7 +16,8 @@ import {
   updateSessionStatus,
   copyMessages,
 } from "../db/queries.js";
-import { spawnAgent, killAgent, healthCheck } from "./spawner.js";
+import { spawnAgent, spawnRcClaude, killAgent, healthCheck } from "./spawner.js";
+import { awaitManifestForPid } from "./rc-attached.js";
 import { setupManagerMQTTHandler } from "./mqtt-handler.js";
 import { shutdown, setRestarting } from "./shutdown.js";
 import { reconcileOnStartup, awaitHello } from "./reconcile.js";
@@ -219,6 +220,16 @@ function handleSpawn(commandId: string, data: Record<string, any>): void {
     logger.info("manager", `Auto-created project entry for ${resolvedPath}`);
   }
 
+  const controlMode: string = data.controlMode ?? "sdk-wrapper";
+
+  if (controlMode === "rc-spawned") {
+    handleSpawnRcClaude(commandId, resolvedPath, model).catch((err) => {
+      logger.error("manager", `rc-spawned spawn failed`, err);
+      publishResponse(commandId, { ok: false, error: err?.message ?? String(err) });
+    });
+    return;
+  }
+
   const sessionId = crypto.randomUUID();
   const _session = createSession(db, {
     id: sessionId,
@@ -264,6 +275,106 @@ function handleSpawn(commandId: string, data: Record<string, any>): void {
       logger.error("manager", `Wrapper ready timeout for ${sessionId}`, err);
       publishResponse(commandId, { ok: false, error: "Wrapper failed to come online" });
     });
+}
+
+// VAKKA_ROOT for the rc-spawned log path (mirrors the derivation in spawner.ts
+// so we don't have to plumb a constant across modules). import.meta.dir is
+// `<vakka>/src/manager` at runtime.
+const VAKKA_ROOT = import.meta.dir.replace("/src/manager", "");
+
+// rc-spawned end-to-end flow: spawn CC in a pty, optionally dismiss the trust
+// dialog, poll for the manifest CC writes once it dials the bridge, then INSERT
+// the session row keyed by the cseId the relay observed. The existing
+// rc-attached observer's announce() will SELECT and skip its own INSERT
+// thanks to commit 5, so the project_path we store here wins.
+async function handleSpawnRcClaude(
+  commandId: string,
+  projectPath: string,
+  model: string,
+): Promise<void> {
+  // Trust-dialog pre-check (read-only). If ~/.claude.json already records
+  // hasTrustDialogAccepted=true for this directory, skip the dismissal step;
+  // otherwise we'll watch the pty log for the dialog marker post-spawn.
+  const trustAccepted = checkTrustAccepted(projectPath);
+
+  const logDir = join(VAKKA_ROOT, "logs", "agents");
+  mkdirSync(logDir, { recursive: true });
+  const startTimeMs = Date.now();
+  const logPath = join(logDir, `rc-${startTimeMs}.log`);
+
+  const { pid, exited, writeInput } = spawnRcClaude({ projectPath, logPath });
+  logger.info(
+    "manager",
+    `Spawned rc-claude PID ${pid} for ${projectPath} (log: ${logPath})`,
+  );
+
+  if (!trustAccepted) {
+    void dismissTrustDialog(logPath, writeInput);
+  }
+
+  const result = await awaitManifestForPid(pid, exited, 10_000);
+  if ("error" in result) {
+    try { process.kill(pid, "SIGTERM"); } catch {}
+    publishResponse(commandId, { ok: false, error: `rc-spawned failed: ${result.error}` });
+    return;
+  }
+
+  const { cseId } = result;
+
+  // INSERT now that we know the cseId. announce() in rc-attached.ts will
+  // SELECT and skip its own INSERT (commit 5), preserving this real
+  // project_path instead of the `<rc-attached>` sentinel.
+  createSession(db, {
+    id: cseId,
+    project_path: projectPath,
+    model,
+    pid,
+    control_mode: "rc-spawned",
+    start_time_ms: startTimeMs,
+  });
+
+  publishResponse(commandId, { ok: true, sessionId: cseId, pid });
+  logger.info(
+    "manager",
+    `rc-spawned session ${cseId} for ${projectPath} (PID ${pid})`,
+  );
+}
+
+function checkTrustAccepted(projectPath: string): boolean {
+  try {
+    const raw = readFileSync(join(homedir(), ".claude.json"), "utf-8");
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const projects = parsed.projects as
+      | Record<string, Record<string, unknown>>
+      | undefined;
+    return projects?.[projectPath]?.hasTrustDialogAccepted === true;
+  } catch {
+    return false;
+  }
+}
+
+// Poll the pty log for the trust-dialog marker; on hit, send "1\r" to dismiss.
+// If the marker doesn't appear within 4s, send "1\r" blind — harmless if the
+// dialog wasn't actually present (just an extra char at the REPL prompt).
+async function dismissTrustDialog(
+  logPath: string,
+  writeInput: (s: string) => void,
+): Promise<void> {
+  const TRIGGER = "Quick safety check";
+  const start = Date.now();
+  while (Date.now() - start < 4000) {
+    try {
+      const txt = readFileSync(logPath, "utf-8");
+      if (txt.includes(TRIGGER)) {
+        writeInput("1\r");
+        return;
+      }
+    } catch {
+      // log may not exist yet; keep polling
+    }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  writeInput("1\r");
 }
 
 // Wait up to 5s for the wrapper to publish its hello on
