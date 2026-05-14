@@ -102,6 +102,11 @@ export function initDatabase(dbPath: string): Database {
   try { db.run("ALTER TABLE sessions ADD COLUMN start_time_ms INTEGER"); } catch {}
   try { db.run("ALTER TABLE sessions ADD COLUMN sdk_session_id TEXT"); } catch {}
   try { db.run("ALTER TABLE sessions ADD COLUMN forked_from_sdk_id TEXT"); } catch {}
+  try { db.run("ALTER TABLE sessions ADD COLUMN control_mode TEXT NOT NULL DEFAULT 'sdk-wrapper'"); } catch {}
+
+  // One-time backfill: existing rc-attached rows (sentinel project_path) get the right mode.
+  // Naturally idempotent — re-running just re-sets the same value.
+  db.run("UPDATE sessions SET control_mode = 'rc-attached' WHERE project_path = '<rc-attached>'");
 
   return db;
 }

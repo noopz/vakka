@@ -65,17 +65,21 @@ export function createSession(
     model: string;
     pid?: number;
     forked_from_sdk_id?: string;
+    control_mode?: string;
+    start_time_ms?: number;
   },
 ): SessionRow {
   db.query(
-    `INSERT INTO sessions (id, project_path, model, pid, forked_from_sdk_id)
-     VALUES (?1, ?2, ?3, ?4, ?5)`,
+    `INSERT INTO sessions (id, project_path, model, pid, forked_from_sdk_id, control_mode, start_time_ms)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
   ).run(
     session.id,
     session.project_path,
     session.model,
     session.pid ?? null,
     session.forked_from_sdk_id ?? null,
+    session.control_mode ?? "sdk-wrapper",
+    session.start_time_ms ?? null,
   );
 
   return getSession(db, session.id)!;

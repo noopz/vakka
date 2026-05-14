@@ -84,6 +84,7 @@ export interface SessionRow {
   cost_usd: number;
   created_at: string;
   last_activity: string;
+  control_mode: "sdk-wrapper" | "rc-attached" | "rc-spawned";
 }
 
 export interface MessageRow {
